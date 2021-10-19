@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+        <style>
+            body {
+                background-color: #f0ecec;
+            }
+            #navBar {
+                width: 100%;
+                display: flex;
+                background: #212121;
+                padding:0;
+                margin: 0;
+            }
+            
+            #navBar a {
+                margin: 0;
+                color: #f2f2f2;
+                padding: 14px 16px;
+                text-align: center;
+                text-decoration: none;
+                flex-grow: 1
+            }
+            
+            .album {
+                background-color: #f5f5f5;
+                border-radius: 10px;
+                margin: 50px;
+                box-shadow: 2px 6px 30px 2px rgba(0, 0, 0, 0.1);
+            }
+            .container {
+                margin-top: 30px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <nav id = "navBar">
+            <a href = "/"> Home </a>
+            <a href = "/artists"> Artists </a>
+        </nav>
+
+        <div  id= "main" class="container">
+            
+        </div>
+      
+    </body>
+   
+
+
+    <script> 
+
+        let user = JSON.parse(localStorage.getItem("user"))
+        const navItem_1 = document.createElement("a")
+        if(user) {
+            navItem_1.href = "/profile"
+            navItem_1.textContent = "Profile"
+
+            const navItem_2 = document.createElement("a")
+            navItem_2.href = "/dashboard"
+            navItem_2.textContent = "Dashboard"
+
+            const navItem_3 = document.createElement("a")
+            navItem_3.textContent = "Logout"
+            navItem_3.href=""
+            navItem_3.onclick = async(e) => {
+                e.preventDefault()
+                user = undefined
+                localStorage.removeItem("user")
+                location.reload()
+            }
+            document.getElementById("navBar").append(navItem_1, navItem_2, navItem_3)
+        } else {
+            navItem_1.href = "/login"
+            navItem_1.textContent = "Login"
+            document.getElementById("navBar").append(navItem_1)
+        }
+
+        ;( async () => {
+            
+            const artistId = Number(location.href.split("=", 2)[1])
+            
+            fetch("http://localhost:3000/getArtist", {
+                method: "POST",
+                headers: {
+                    "Content-type": "application/json"
+                },
+                body: JSON.stringify({artistId})
+            })
+            .then( async(res) => {
+                if(res.ok) return res.json()
+                const error = await res.json()
+                throw error
+            })
+            .then( ({data}) => {
+                
+                const title = document.createElement("h1")
+                title.textContent = `${data.firstName} ${data.lastName}`
+                const description = document.createElement("p")
+                description.textContent = data.description
+                document.getElementById("main").append(title, description)
+                
+
+                //albums
+
+                for(const album of data.albums){
+                    //album
+                    const div = document.createElement("div")
+                    div.id = `album_${album.id}`
+                    div.classList.toggle( "album")
+                    div.style.padding = "50px"
+                    div.style.textAlign= "center"
+                    
+                    // name description
+                    const albumName = document.createElement("h2")
+                    albumName.textContent = album.name
+                    const albumDescription = document.createElement("p")
+                    albumDescription.textContent = album.description
+                    
+                    //carousel
+                    const carousel = document.createElement("div")
+                    carousel.id = `carousel_${album.id}`
+                    carousel.classList.toggle("carousel")
+                    carousel.classList.toggle("slide")
+                    carousel.style.width = "70%"
+                    
+                    carousel.style.marginLeft = "15%"
+                    
+                    //carousel.setAttribute("data-ride", "carousel")
+                    const carouselInner = document.createElement("div")
+                    carouselInner.classList.toggle("carousel-inner")
+                    carouselInner.style.textAlign = "center"
+                    carouselInner.style.background = album.background
+
+                    // controller carousel prev
+                    const prevA = document.createElement("a")
+                    prevA.classList.toggle("carousel-control-prev")
+                    prevA.href = `#carousel_${album.id}`
+                    prevA.setAttribute("data-slide", "prev")
+                    const prevSpan = document.createElement("span")
+                    prevSpan.classList.toggle("carousel-control-prev-icon")
+                    prevA.append(prevSpan)
+
+                    // controller carousel next
+                    const nextA = document.createElement("a")
+                    nextA.classList.toggle("carousel-control-next")
+                    nextA.href = `#carousel_${album.id}`
+                    nextA.setAttribute("data-slide", "next")
+                    const nextSpan = document.createElement("span")
+                    nextSpan.classList.toggle("carousel-control-next-icon")
+                    nextA.append(nextSpan)
+                    
+                    //images
+                    for(let i = 0; i < album.images.length; i ++) {
+                        const image = album.images[i]
+                        const carouselItem = document.createElement("div")
+                        carouselItem.classList.toggle("carousel-item")
+                        
+                        if(i === 0 ){
+                            carouselItem.classList.toggle("active")
+                        }
+
+                        //image
+                        const buffer = new Uint8Array(image.image.data)
+                        const img = document.createElement("img")
+                        img.src = URL.createObjectURL(
+                            new Blob([buffer], { type: `image/${image.ext}` })
+                        )
+                        img.alt = image.alt
+                        img.style.width = "50%"
+                        img.style.height = "400px"
+                        img.style.margin = "25px"
+                        // caption
+                        const carouselCaption = document.createElement("div")
+                        carouselCaption.classList.toggle("carousel-caption")
+                        const imageName = document.createElement("h3")
+                        imageName.textContent = image.name
+                        const imageDescription = document.createElement("p")
+                        imageDescription.textContent = image.description
+                        carouselCaption.append(imageName, imageDescription)
+
+                        carouselItem.append(img, carouselCaption)
+                        carouselInner.append(carouselItem)
+                        
+                    }
+
+                    carousel.append(carouselInner,prevA, nextA )
+                    div.append(albumName, albumDescription, carousel)
+                    document.getElementById("main").append(div)
+                }
+            })
+            .catch( err => {
+                console.log(err)
+                alert(err.error.message)
+            })
+        })()
+        
+    </script>
+</html>

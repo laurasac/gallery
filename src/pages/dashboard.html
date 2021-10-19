@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        <style>
+            body {
+                background-color: #f0ecec;
+            }
+            #navBar {
+                width: 100%;
+                display: flex;
+                background: #212121;
+                padding:0;
+                margin: 0;
+            }
+            
+            #navBar a {
+                margin: 0;
+                color: #f2f2f2;
+                padding: 14px 16px;
+                text-align: center;
+                text-decoration: none;
+                flex-grow: 1
+            }
+            button.add {
+                background: #fbfafa;
+                width: 30px;
+                height: 30px;
+                border: 1px solid #B1B1B1;
+                box-sizing: border-box;
+                border-radius: 5px;
+                font-weight: bold;
+                font-size: 15px;
+                line-height: 24px;
+                color: #c9c9c9;
+                margin-right: 10px;
+            }
+            span.add, p.add {
+                font-weight: bold;
+                font-size: 20px;
+                color: #ababab;
+            }
+            #addAlbumForm {
+                display: none;
+            }
+
+            .album {
+                background-color: #f5f5f5;
+                border-radius: 10px;
+                margin-bottom: 50px;
+                box-shadow: 2px 6px 30px 2px rgba(0, 0, 0, 0.1);
+                display: flex;
+            }
+
+            #albums {
+                padding: 50px
+            }
+            input {
+                border: 1px solid #a5a5a5;
+                border-radius: 5px;
+                font-style: normal;
+                margin-left: 10px;
+                margin-right: 10px;
+                padding: 5px;
+                font-size: 14px;
+                margin-bottom: 10px;
+            }
+            .container {
+                margin-top: 30px;
+            }
+            .card {
+        
+                padding: 25px;
+                background-color: #f5f5f5;
+                border-radius: 10px;
+                
+                height: auto;
+                box-shadow: 2px 6px 30px 2px rgba(0, 0, 0, 0.1);
+                
+            }
+        </style>
+    </head>
+
+    <body>
+        
+    <nav id = "navBar">
+        <a href = "/"> Home </a>
+        <a href = "/artists"> Artists </a>
+    </nav>
+
+        <div class = "container">
+            <div id = "albums">
+                <h1> Dashboard</h1>
+                
+                <div id = "albumsMain">
+                    <p id = "controlAlbum"> Non ci sono albums</p>
+                </div>
+                <div class = "addAlbum">
+                    <button id = "showAddAlbum" class = "add" type = "button" onclick="showAddAlbum()"> + </button>
+                    <span class = "add"> Crea un nuovo album</span>
+                    
+                    <br><br>
+                    <form id = "addAlbumForm" class = "card">
+                        <label for = "nameAlbum" >
+                            Name*
+                            <input type = "text" id = "nameAlbum" name = "nameAlbum">
+                        </label>
+                        
+                        <label for = "descriptionAlbum" >
+                            Description
+                            <input type = "text" id = "descriptionAlbum" name = "descriptionAlbum">
+                        </label>
+                        
+        
+                        <label for = "backgroundAlbum" >
+                            Background for the images displayed
+                            <input type = "color" id = "backgroundAlbum" name = "backgroundAlbum" value = "#ffffff">
+                        </label>
+                        
+                        <br><br>
+                        <button type = "button" onclick = "addAlbum()" class="add"> + </button>
+                        <span class = "add"> Create Album</span>
+                    </form>
+                    
+                </div>
+                
+                
+            </div>
+        </div>
+        
+    </body>
+   
+
+    <script>
+        let user = JSON.parse(localStorage.getItem("user"))
+        const navItem_1 = document.createElement("a")
+        if(user) {
+            navItem_1.href = "/profile"
+            navItem_1.textContent = "Profile"
+
+            const navItem_2 = document.createElement("a")
+            navItem_2.href = "/dashboard"
+            navItem_2.textContent = "Dashboard"
+
+            const navItem_3 = document.createElement("a")
+            navItem_3.textContent = "Logout"
+
+            navItem_3.onclick = async(e) => {
+                e.preventDefault()
+                user = undefined
+                localStorage.removeItem("user")
+                location.reload()
+            }
+            document.getElementById("navBar").append(navItem_1, navItem_2, navItem_3)
+        } else {
+            location.href = "http://localhost:3000"
+        }
+
+        
+        const getArtist =  async () => {
+            
+            const artistId = Number(location.href.split("=", 2)[1])
+            
+            const res = await fetch("http://localhost:3000/getArtist", {
+                method: "POST",
+                headers: {
+                    "Content-type": "application/json"
+                },
+                body: JSON.stringify({artistId: user.userId})
+            })
+            
+            if(res.ok) return res.json()
+            const err = await res.json()
+            console.log(err)
+            alert(err.error.message)
+        }
+
+        (async () => {
+            const {data: {albums}} = await getArtist()
+            
+            if(albums.length !== 0){
+                    document.getElementById("controlAlbum").style.display = "none"
+            }
+                
+            for(const album of albums){
+                    //album
+                    const div = document.createElement("div")
+                    div.id = `album_${album.id}`
+                    div.classList.toggle( "album")
+                    div.style.padding = "50px"
+                    
+                    // album details
+                    const albumDetails = document.createElement("div")
+                    albumDetails.style.flexGrow = "1"
+                    albumDetails.id = `album_${album.id}_albumDetails`
+                    const h4 = document.createElement("h4") 
+                    h4.textContent = "Album details"
+                    // name 
+                    const albumName = document.createElement("p")
+                    const albumNameInput = document.createElement("input")
+                    albumNameInput.id = `album_${album.id}_albumName`
+                    albumNameInput.value = album.name
+                    albumNameInput.onchange = updateAlbum
+                    albumName.textContent = "Name : "
+                    albumName.append(albumNameInput)
+
+                    // description
+                    const albumDescription = document.createElement("p")
+                    albumDescription.textContent = "Description : "
+                    const albumDescriptionInput = document.createElement("input")
+                    albumDescriptionInput.id = `album_${album.id}_albumDescription`
+                    albumDescriptionInput.value = album.description
+                    albumDescriptionInput.onchange = updateAlbum
+                    albumDescription.append(albumDescriptionInput)
+                    
+                    // background
+                    const backgroundLabel = document.createElement("p")
+                    backgroundLabel.textContent = "Background: "
+                    const backgroundColor = document.createElement("input")
+                    backgroundColor.id = `album_${album.id}_background`
+                    backgroundColor.value = album.background
+                    backgroundColor.onchange = updateAlbum
+                    backgroundColor.type = "color"
+                    backgroundLabel.append(backgroundColor)
+
+                    // delete Button
+                    const deleteAlbumButton = document.createElement("button")
+                    deleteAlbumButton.type = "button"
+                    deleteAlbumButton.onclick = deleteAlbum
+                    deleteAlbumButton.textContent = "-"
+                    deleteAlbumButton.id = `album_${album.id}_deleteButton`
+                    deleteAlbumButton.classList.toggle("add")
+                    const deleteAlbumSpan = document.createElement("span")
+                    deleteAlbumSpan.textContent = "Elimina Album"
+                    deleteAlbumSpan.classList.toggle("add")
+                    
+                    //images
+                    const images = document.createElement("div")
+                    images.id = `image_${album.id}`
+                    images.style.flexGrow = "1"
+                    const h4Img = document.createElement("h4")
+                    h4Img.textContent = "Images"
+                    const listImages = document.createElement("div")
+                    listImages.id = `image_${album.id}_listImages`
+                    listImages.style.overflowY = "auto"
+                    listImages.classList.toggle("list-group")
+
+                    for(let i = 0; i < album.images.length; i ++) {
+                        const image = album.images[i]
+                        const imageNameInput = document.createElement("input")
+                        imageNameInput.value = image.name
+                        imageNameInput.id = `image_${album.id}_imageName_${image.id}`
+                        imageNameInput.onchange = updateImage
+
+                        const imageAltInput = document.createElement("input")
+                        imageAltInput.value = image.alt
+                        imageAltInput.id = `image_${album.id}_imageAlt_${image.id}`
+                        imageAltInput.onchange = updateImage
+
+                        const imageDescriptionInput = document.createElement("input")
+                        imageDescriptionInput.value = image.description
+                        imageDescriptionInput.id = `image_${album.id}_imageDescription_${image.id}`
+                        imageDescriptionInput.onchange = updateImage
+
+                        const deleteButtonImage = document.createElement("button")
+                        deleteButtonImage.type = "button"
+                        deleteButtonImage.onclick = deleteImage
+                        deleteButtonImage.textContent = "-"
+                        deleteButtonImage.classList.toggle("add")
+                        deleteButtonImage.id = `image_${album.id}_delete_${image.id}`
+
+                        const li = document.createElement("div")
+                        li.classList.toggle("list-group-item")
+                        li.style.overflowY = "scroll"
+                        li.style.height = "50px"
+                        li.append("Name: ", imageNameInput, "Alt: ", imageAltInput, document.createElement("br"), "Description: ", imageDescriptionInput, deleteButtonImage)
+                        listImages.append(li, document.createElement("br"))
+                        
+                    }
+
+                    
+                    const addImageButton = document.createElement("input")
+                    addImageButton.textContent = "+"
+                    addImageButton.classList.toggle("add")
+                    addImageButton.type = "file"
+                    addImageButton.accept = "image/png, image/jpeg, image/jpg"
+                    addImageButton.id = `image_${album.id}_addImage`
+                    addImageButton.onchange = addImage
+                    const addImageP = document.createElement("p")
+                    addImageP.textContent = "Crea una nuova immagine"
+                    addImageP.classList.toggle("add")
+                    
+                    images.append(h4Img, listImages,  addImageP, addImageButton)
+                    albumDetails.append(h4, albumName, albumDescription, backgroundLabel, deleteAlbumButton, deleteAlbumSpan)
+                    div.append( albumDetails, images)
+                    document.getElementById("albumsMain").append(div)
+                }
+            
+        })()
+        
+
+        const showAddAlbum = () => {
+            document.getElementById("addAlbumForm").style.display = "block"
+            document.getElementById("showAddAlbum").disabled = true
+        }
+        
+        const addAlbum = async () => {
+            const errorP = document.createElement("p")
+            errorP.style.color = "red"
+            document.getElementById("addAlbumForm").append(errorP)
+            
+            const name = document.getElementById("nameAlbum").value
+            const description = document.getElementById("descriptionAlbum").value
+            const background = document.getElementById("backgroundAlbum").value
+
+            if(!name) {
+                errorP.textContent = "Mancano dei campi obbligatori"
+                return
+            }
+
+            fetch("http://localhost:3000/createAlbum", {
+                method: "POST",
+                headers: {
+                    "Content-type": "application/json",
+                    "Authorization": user.jwt,
+                },
+                body: JSON.stringify({name, description, background})
+            })
+            .then( async (res) => {
+                if(res.ok) return res.json()
+                const error = await res.json()
+                throw error
+            })
+            .then( ({data:album}) => {
+                //album
+                document.getElementById("controlAlbum").style.display = "none"
+                document.getElementById("nameAlbum").value = ""
+                document.getElementById("descriptionAlbum").value = ""
+                document.getElementById("backgroundAlbum").value = "#ffffff"
+
+                const div = document.createElement("div")
+                    div.id = `album_${album.id}`
+                    div.classList.toggle( "album")
+                    div.style.padding = "50px"
+                    
+                    // album details
+                    const albumDetails = document.createElement("div")
+                    albumDetails.style.flexGrow = "1"
+                    albumDetails.id = `album_${album.id}_albumDetails`
+                    const h4 = document.createElement("h4") 
+                    h4.textContent = "Album details"
+                    // name 
+                    const albumName = document.createElement("p")
+                    const albumNameInput = document.createElement("input")
+                    albumNameInput.id = `album_${album.id}_albumName`
+                    albumNameInput.value = album.name
+                    albumNameInput.onchange = updateAlbum
+                    albumName.textContent = "Name : "
+                    albumName.append(albumNameInput)
+
+                    // description
+                    const albumDescription = document.createElement("p")
+                    albumDescription.textContent = "Description : "
+                    const albumDescriptionInput = document.createElement("input")
+                    albumDescriptionInput.id = `album_${album.id}_albumDescription`
+                    albumDescriptionInput.value = album.description
+                    albumDescriptionInput.onchange = updateAlbum
+                    albumDescription.append(albumDescriptionInput)
+                    
+                    // background
+                    const backgroundLabel = document.createElement("p")
+                    //backgroundLabel.for = `background_${album.id}`
+                    backgroundLabel.textContent = "Background: "
+                    const backgroundColor = document.createElement("input")
+                    backgroundColor.id = `album_${album.id}_background`
+                    backgroundColor.value = album.background
+                    backgroundColor.onchange = updateAlbum
+                    backgroundColor.type = "color"
+                    backgroundLabel.append(backgroundColor)
+                    const deleteAlbumButton = document.createElement("button")
+                    deleteAlbumButton.type = "button"
+                    deleteAlbumButton.onclick = deleteAlbum
+                    deleteAlbumButton.textContent = "-"
+                    deleteAlbumButton.id = `album_${album.id}_deleteButton`
+                    deleteAlbumButton.classList.toggle("add")
+                    const deleteAlbumSpan = document.createElement("span")
+                    deleteAlbumSpan.textContent = "Elimina Album"
+                    deleteAlbumSpan.classList.toggle("add")
+                    //images
+                    const images = document.createElement("div")
+                    images.id = `image_${album.id}`
+                    images.style.flexGrow = "1"
+                    const h4Img = document.createElement("h4")
+                    h4Img.textContent = "Images"
+                    const listImages = document.createElement("div")
+                    listImages.id = `image_${album.id}_listImages`
+                    listImages.style.overflowY = "auto"
+
+                    const addImageButton = document.createElement("input")
+                    addImageButton.textContent = "+"
+                    addImageButton.classList.toggle("add")
+                    addImageButton.type = "file"
+                    addImageButton.accept = "image/png, image/jpeg, image/jpg"
+                    addImageButton.id = `addImage_${album.id}`
+                    addImageButton.onchange = addImage
+                    const addImageP = document.createElement("p")
+                    addImageP.textContent = "Crea una nuova immagine"
+                    addImageP.classList.toggle("add")
+                    
+                    images.append(h4Img, listImages,  addImageP, addImageButton, )
+                    albumDetails.append(h4, albumName, albumDescription, backgroundLabel, deleteAlbumButton, deleteAlbumSpan)
+                    div.append( albumDetails, images)
+                    
+                document.getElementById("albumsMain").append(div)
+                document.getElementById("addAlbumForm").style.display = "none"
+                document.getElementById("showAddAlbum").disabled = false
+                errorP.textContent = ""
+            })
+            .catch(err => {
+                console.log(err)
+                if(err.error.code === "bad_request") {
+                    errorP.textContent = err.error.message
+                    return
+                }
+                alert(err.error.message)
+            })
+            
+        }
+
+        
+        const addImage = async(e) => {
+            
+            const reader = new FileReader()
+            reader.onload = async(image) => {
+               
+
+                const buffer =  new Uint8Array(image.target.result)
+                
+                let data = []
+                for(let i = 0; i < buffer.length; i++){
+                    data[i] = buffer[i]
+                }
+               
+                fetch("http://localhost:3000/insertImageIntoAlbum", {
+                    method: "POST",
+                    headers: {
+                        "Content-type": "application/json",
+                        "Authorization": user.jwt
+                    },
+                    body: JSON.stringify({
+                        albumId: e.target.id.split("_", 2)[1],
+                        name: e.target.files[0].name.split(".", 2)[0],
+                        ext: e.target.files[0].name.split(".", 2)[1],
+                        alt:  e.target.files[0].name.split(".", 2)[0],
+                        description: "",
+                        image: data
+                    })
+                })
+                .then(async (res) => {
+                    if(res.ok) return res.json()
+                    const error = await res.json()
+                    throw error
+                })
+                .then( ({data}) => {
+                    const imageNameInput = document.createElement("input")
+                    imageNameInput.value = data.name
+                    imageNameInput.id = `image_${e.target.id.split("_", 2)[1]}_imageName_${data.id}`
+                    imageNameInput.onchange = updateImage
+
+                    const imageAltInput = document.createElement("input")
+                    imageAltInput.value = data.alt
+                    imageAltInput.id = `image_${e.target.id.split("_", 2)[1]}_imageAlt_${data.id}`
+                    imageAltInput.onchange = updateImage
+
+                    const imageDescriptionInput = document.createElement("input")
+                    imageDescriptionInput.value = data.description
+                    imageDescriptionInput.id = `image_${e.target.id.split("_", 2)[1]}_imageDescription_${data.id}`
+                    imageDescriptionInput.onchange = updateImage
+                    
+                    const deleteButtonImage = document.createElement("button")
+                        deleteButtonImage.type = "button"
+                        deleteButtonImage.onclick = deleteImage
+                        deleteButtonImage.textContent = "-"
+                        deleteButtonImage.classList.toggle("add")
+                        deleteButtonImage.id = `image_${e.target.id.split("_", 2)[1]}_delete_${data.id}`
+                        
+                        const li = document.createElement("div")
+                        li.classList.toggle("list-group-item")
+                        li.style.overflowY = "scroll"
+                        li.style.height = "50px"
+                    li.append("Name: ", imageNameInput, "Alt: ", imageAltInput, "Description: ", imageDescriptionInput, deleteButtonImage)
+                    
+                    document.getElementById( `image_${e.target.id.split("_", 2)[1]}_listImages`).append( li, document.createElement("br"))
+                })
+                .catch( err => {
+                    console.log(err)
+                    alert(err.error.message)
+                })
+            }
+            reader.readAsArrayBuffer(e.target.files[0]);
+            
+        }
+
+        const updateAlbum = async (e) => {
+            const errorP = document.createElement("p")
+            errorP.style.color = "red"
+            document.getElementById(`album_${e.target.id.split("_", 2)[1]}_albumDetails`).append(errorP)
+            
+
+            const name = document.getElementById(`album_${e.target.id.split("_", 2)[1]}_albumName`).value
+            const description = document.getElementById(`album_${e.target.id.split("_", 2)[1]}_albumDescription`).value
+            const background = document.getElementById(`album_${e.target.id.split("_", 2)[1]}_background`).value
+            if(!name) {
+                errorP.textContent = "inserire nome album"
+                return
+            }
+            
+            fetch("http://localhost:3000/updateAlbum", {
+                method: "POST",
+                headers: {
+                    "Content-type": "application/json",
+                    "Authorization": user.jwt
+                },
+                body: JSON.stringify({
+                    albumId: e.target.id.split("_", 2)[1],
+                    updates: {
+                        name,
+                        description, 
+                        background
+                    }
+                })
+            })
+            .then( async (res) => {
+                if(res.ok) {
+                    errorP.textContent = ""
+                    return
+                }
+                const error = await res.json()
+                throw error
+            })
+            .catch( err => {
+                if(err.error.code === "internal_server_error") alert(err.error.message)
+                else errorP.textContent = err.error.message
+            })
+
+        }
+
+        const updateImage = async (e) => {
+            const errorP = document.createElement("p")
+            errorP.style.color = "red"
+            document.getElementById(`image_${e.target.id.split("_", 2)[1]}`).append(errorP)
+            
+
+            const name = document.getElementById(`image_${e.target.id.split("_", 2)[1]}_imageName_${e.target.id.split("_", 4)[3]}`).value
+            const description = document.getElementById(`image_${e.target.id.split("_", 2)[1]}_imageDescription_${e.target.id.split("_",4)[3]}`).value
+            const alt = document.getElementById(`image_${e.target.id.split("_", 2)[1]}_imageAlt_${e.target.id.split("_", 4)[3]}`).value
+            
+            if(!name || !alt) {
+                errorP.textContent = "inserire nome immagine e alt immagine"
+                return
+            }
+            fetch("http://localhost:3000/updateImage", {
+                method: "POST",
+                headers: {
+                    "Content-type": "application/json",
+                    "Authorization": user.jwt
+                },
+                body: JSON.stringify({
+                    imageId: e.target.id.split("_", 4)[3],
+                    updates: {
+                        name,
+                        description, 
+                        alt
+                    }
+                })
+            })
+            .then( async (res) => {
+                if(res.ok) {
+                    errorP.textContent = ""
+                    return
+                }
+                const error = await res.json()
+                throw error
+            })
+            .catch( err => {
+                if(err.error.code === "internal_server_error") alert(err.error.message)
+                else errorP.textContent = err.error.message
+            })
+
+        }
+
+        const deleteAlbum = async (e) => {
+            const errorP = document.createElement("p")
+            errorP.style.color = "red"
+            document.getElementById(`album_${e.target.id.split("_", 2)[1]}_albumDetails`).append(errorP)
+            
+            fetch("http://localhost:3000/deleteAlbum", {
+                method: "POST",
+                headers: {
+                    "Content-type": "application/json",
+                    "Authorization": user.jwt
+                },
+                body: JSON.stringify({
+                    albumId: e.target.id.split("_", 2)[1]
+                })
+            })
+            .then( async (res) => {
+                if(res.ok) {
+                    location.reload()
+                    return
+                }
+                const error = await res.json()
+                throw error
+            })
+            .catch( err => {
+                
+                if(err.error.code === "internal_server_error") alert(err.error.message)
+                else errorP.textContent = err.error.message
+            })
+        }
+        const deleteImage = async (e) => {
+            const errorP = document.createElement("p")
+            errorP.style.color = "red"
+            document.getElementById(`image_${e.target.id.split("_", 2)[1]}`).append(errorP)
+            
+            fetch("http://localhost:3000/deleteImage", {
+                method: "POST",
+                headers: {
+                    "Content-type": "application/json",
+                    "Authorization": user.jwt
+                },
+                body: JSON.stringify({
+                    imageId: e.target.id.split("_", 4)[3]
+                })
+            })
+            .then( async (res) => {
+                if(res.ok) {
+                    location.reload()
+                    return
+                }
+                const error = await res.json()
+                throw error
+            })
+            .catch( err => {
+                if(err.error.code === "internal_server_error") alert(err.error.message)
+                else errorP.textContent = err.error.message
+            })
+        }
+    </script>
+    
+</html>

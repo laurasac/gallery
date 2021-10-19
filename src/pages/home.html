@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+        <style>
+            body {
+                background-color: #f0ecec;
+            }
+            #navBar {
+                width: 100%;
+                display: flex;
+                background: #212121;
+                padding:0;
+                margin: 0;
+            }
+            
+            p {
+                font-size:25px;
+            }
+            #navBar a {
+                margin: 0;
+                color: #f2f2f2;
+                padding: 14px 16px;
+                text-align: center;
+                text-decoration: none;
+                flex-grow: 1
+            }
+            .container {
+                margin-top: 30px;
+            }
+            img {
+                width:50vw
+            }
+        </style>
+    </head>
+
+    <body>
+        
+        <nav id = "navBar">
+            <a href = "/"> Home </a>
+            <a href = "/artists"> Artists </a>
+        </nav>
+        <div class = "container">
+            <h1> Gallery online</h1>
+            <p> Gallery online è un progetto che permette agli artitsti di tutto il mondo di pubblicare online in modo gratuito le loro opere, e farle conoscere al mondo
+                Utilizzarlo é semplice. Per saperne di più <a href= "/signUp"> iscriviti ora </a>
+            </p>
+            <div style = "text-align: center;"> 
+                <img src = "./home.png" >
+            </div>
+            
+        </div>
+        
+    </body>
+   
+
+    <script>
+        let user = JSON.parse(localStorage.getItem("user"))
+        const navItem_1 = document.createElement("a")
+        if(user) {
+            navItem_1.href = "/profile"
+            navItem_1.textContent = "Profile"
+
+            const navItem_2 = document.createElement("a")
+            navItem_2.href = "/dashboard"
+            navItem_2.textContent = "Dashboard"
+
+            const navItem_3 = document.createElement("a")
+            navItem_3.textContent = "Logout"
+            navItem_3.href=""
+            navItem_3.onclick = async(e) => {
+                e.preventDefault()
+                user = undefined
+                localStorage.removeItem("user")
+                location.reload()
+            }
+            document.getElementById("navBar").append(navItem_1, navItem_2, navItem_3)
+            
+        } else {
+            navItem_1.href = "/login"
+            navItem_1.textContent = "Login"
+            document.getElementById("navBar").append(navItem_1)
+        }
+        
+    </script>
+    
+</html>

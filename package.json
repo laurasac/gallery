@@ -1,0 +1,22 @@
+{
+  "name": "gallery",
+  "version": "1.0.0",
+  "description": "gallery",
+  "main": "index.js",
+  "scripts": {
+    "start": " docker-compose down && docker-compose build && docker-compose up",
+    "db:start": "npm run db:destroy && npm run db:create && npm run db:seed",
+    "api:start": "node src/index.js",
+    "db:seed": "node src/dbScripts/seed.js",
+    "db:destroy": "node src/dbScripts/destroy.js",
+    "db:create": "node src/dbScripts/create.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "pg": "^8.7.1"
+  }
+}
